@@ -32,7 +32,7 @@ export default new Strategy(opts, async (req: Request, payload, done) => {
           const blacklist = await getBlackListAccessService();
 
           if (user.id != undefined && !blacklist.includes(user.id) && !blacklist.includes(requestToken)) {
-            return done(null, dataUser);
+            return done(null, user);
           }
         }
       }
@@ -44,5 +44,6 @@ export default new Strategy(opts, async (req: Request, payload, done) => {
     return done(null, false);
   } catch (error) {
     logError.error('Unexpected error checking reset token. User is unathorized : ' + payload.id + ' error ' + error);
+    return done(null, false);
   }
 });

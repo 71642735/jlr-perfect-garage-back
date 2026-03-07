@@ -6,6 +6,7 @@ import { getBlackListAccessService } from '@/auth/auth.service';
 import { logError, logInfo } from '@/utils/utils.logger';
 import DatabaseAuth from '@/auth/auth.database';
 import dotenv from 'dotenv';
+import { userAuthMapper } from '@/auth/auth.mapper';
 
 dotenv.config();
 
@@ -25,18 +26,7 @@ export default new Strategy(opts, async (req: Request, payload, done) => {
       const dataUser = await databaseAuth.getAuthInfoById(pool, payload.id);
 
       if (dataUser != null) {
-        const iUser: IUser = {
-          ...dataUser,
-          managed_countries: dataUser.managed_countries
-            ? dataUser.managed_countries.split(',').map((c: string) => c.trim())
-            : [],
-          id: dataUser.id,
-          email: dataUser.email,
-          role: dataUser.role,
-          status: dataUser.status,
-          failed_login_attempts: 0,
-        };
-
+        const iUser: IUser = await userAuthMapper(dataUser);
         const blacklist = await getBlackListAccessService();
 
         if (!blacklist.includes(iUser.id) && !blacklist.includes(requestToken)) {

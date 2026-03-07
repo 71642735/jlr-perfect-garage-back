@@ -1,9 +1,15 @@
 export interface IUser {
   id: string;
   email: string;
-  password?: string;
+  password: string;
   role: string;
   status: string;
-  failed_login_attempts: number;
-  managed_countries?: string[];
+  failedLoginAttempts: number;
+  areaCode: string;
+  lang: string;
+  twofaSendLockUntil: Date;
+  twofaSendCount: number;
+  twofaSendFirstAt: Date;
+  lastTwofaSendAt: Date;
+  twofaLockUntil: Date;
 }

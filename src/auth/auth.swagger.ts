@@ -1,4 +1,4 @@
-import { commonConfig, createParam, getResponses } from '../utils/utils.swagger';
+import { commonConfig, createParam, getResponses } from '@/utils/utils.swagger';
 
 export const authPaths = {
   '/api/v1/auth/login': {
@@ -128,11 +128,10 @@ export const authPaths = {
       },
     },
   },
-  '/api/v1/auth/new-password/{id}': {
+  '/api/v1/auth/new-password': {
     patch: {
       summary: 'Create new forgot password',
       ...commonConfig('Auth'),
-      parameters: [createParam('id', 'path', 'ID', 'string', true)],
       requestBody: {
         content: {
           'application/json': {

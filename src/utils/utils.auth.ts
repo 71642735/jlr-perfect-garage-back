@@ -35,7 +35,7 @@ const create2FAToken = async (id: string, time: string, secretJwt: string): Prom
   return token;
 };
 
-const generateCode = async (connection: PoolConnection, userId: string): Promise<string> => {
+const generateAndInsertCode = async (connection: PoolConnection, userId: string): Promise<string> => {
   const numero = crypto.randomInt(0, 1_000_000);
   const codeString = numero.toString().padStart(6, '0');
   const code = hashCode(userId, codeString);
@@ -76,4 +76,4 @@ const insertTwoFa = async (connection: PoolConnection, userId: string, code: Buf
   }
 };
 
-export { createToken, createLoginToken, generateCode, create2FAToken, hashCode };
+export { createToken, createLoginToken, generateAndInsertCode, create2FAToken, hashCode };

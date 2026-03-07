@@ -1,6 +1,8 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { logError, logInfo } from './utils.logger';
+import { CustomError } from './utils.custom.error';
+import { PoolConnection, RowDataPacket } from 'mysql2/promise';
 
 dotenv.config();
 
@@ -30,7 +32,7 @@ interface EventParams2FA {
   authenticationCode: string;
   eventDefinitionKey: string;
 }
-
+/*
 export interface SFMCCredentials {
   clientId: string;
   clientSecret: string;
@@ -38,6 +40,18 @@ export interface SFMCCredentials {
   eventSuccess: string;
   eventResetPwd: string;
   eventFailed: string;
+  accountId: string;
+}*/
+
+export interface SFMCCredentials {
+  clientId: string;
+  clientSecret: string;
+  accountId: string;
+}
+
+export interface SFMCConfiguration {
+  apiEvent2fa: string;
+  apiEventResetPassword: string;
 }
 
 export const authenticate = async (clientId, clientSecret, authUrl): Promise<string> => {
@@ -169,3 +183,45 @@ export const createEvent2FA = async <T>(params: EventParams2FA): Promise<T> => {
 
   return event;
 };
+
+export function getSFMCCredentials(area_code: string): SFMCCredentials {
+  const clientIdKey = `SFMC_CLIENT_ID_${area_code}`;
+  const clientSecretKey = `SFMC_CLIENT_SECRET_${area_code}`;
+  const accountIdKey = `SFMC_ACCOUNT_ID_${area_code}`;
+
+  const clientId = process.env[clientIdKey];
+  const clientSecret = process.env[clientSecretKey];
+  const accountId = process.env[accountIdKey];
+
+  if (clientId && clientSecret && accountId) {
+    return {
+      clientId,
+      clientSecret,
+      accountId,
+    };
+  }
+  throw new CustomError('No credendials for ' + area_code, 404);
+}
+
+export async function getSFMCConfiguration(connection: PoolConnection, area_code: string): Promise<SFMCConfiguration> {
+  let query = `SELECT *
+					FROM country_sfmc_configuration						
+					WHERE area_code = ?`;
+
+  try {
+    const [rows] = await connection.execute<RowDataPacket[]>(query, [area_code]);
+    if (rows.length > 0) {
+      if (!rows[0].sfmc_api_event_2fa || !rows[0].sfmc_api_event_reset_password) {
+        throw new CustomError(`Some SFMC Configuration for region ${area_code} not found`, 404);
+      }
+      return {
+        apiEvent2fa: rows[0].sfmc_api_event_2fa,
+        apiEventResetPassword: rows[0].sfmc_api_event_reset_password,
+      };
+    }
+    throw new CustomError(`SFMC Configuration for region ${area_code} not found`, 404);
+  } catch (error) {
+    logError.error('Unexpected error getSFMCConfiguration area_Code: ' + area_code + ' error ' + error);
+    throw error;
+  }
+}

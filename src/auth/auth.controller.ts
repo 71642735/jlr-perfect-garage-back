@@ -92,7 +92,7 @@ export const createNewPassword = async (req: Request, res: Response): Promise<Re
   const password = req.body.password;
 
   try {
-    await createPasswordService(user.id, password);
+    await createPasswordService(user, password);
     return res.status(200).json({ message: 'Password updated!' });
   } catch (error) {
     logError.error('Error in createNewPassword. Error: ' + error);

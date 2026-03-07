@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validateJoi, validatePathParam } from '../middleware/middleware.joi.validation';
+import { validateJoi, validatePathParam } from '@/middleware/middleware.joi.validation';
 import { SchemasAuth } from './schemas/auth.schemas';
 import { login, refreshToken, createNewPassword, forgotPassword, checkCode, resendCode } from './auth.controller';
 import passport from 'passport';

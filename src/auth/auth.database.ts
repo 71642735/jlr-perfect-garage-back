@@ -55,26 +55,13 @@ class DatabaseAuth {
 
   async getAuthInfoById(connection: PoolConnection | Pool, id: string): Promise<RowDataPacket | null> {
     try {
-      const query: string = `SELECT 
-                                login.id,
-                                login.email,
-                                login.password,
-                                login.role,
-                                login.status,
-                                login.failed_login_attempts,
-                                login.last_login,
-                                GROUP_CONCAT(rac.area_code SEPARATOR ', ') AS managed_countries
-                            FROM login 
-                            LEFT JOIN rel_admin_country rac ON rac.admin_id = login.id
-                            WHERE login.id = ?
-                            GROUP BY 
-                                login.id,
-                                login.email,
-                                login.password,
-                                login.role,
-                                login.status,
-                                login.failed_login_attempts,
-                                login.last_login;`;
+      const query: string = `SELECT user.id, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
+                        user.preferred_language, login.twofa_send_lock_until, login.twofa_send_count, login.twofa_send_first_at,
+                        login.last_twofa_send_at, login.twofa_lock_until
+                      FROM user user 
+                      LEFT JOIN login login ON login.id = user.id
+                      LEFT JOIN retailer ret ON user.retailer_id = ret.id
+                      WHERE user.id = ? AND user.active = 1 FOR UPDATE`;
       const [rows] = await connection.execute<RowDataPacket[]>(query, [id]);
 
       if (rows.length > 0) {
@@ -89,13 +76,21 @@ class DatabaseAuth {
 
   async getAuthInfoByEmail(connection: PoolConnection, email: string): Promise<RowDataPacket | null> {
     try {
-      const [rows] = await connection.execute<RowDataPacket[]>('SELECT * FROM login WHERE email = ?', [email]);
+      const query: string = `SELECT user.id, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
+                        user.preferred_language, login.twofa_send_lock_until, login.twofa_send_count, login.twofa_send_first_at,
+                        login.last_twofa_send_at, login.twofa_lock_until
+                      FROM user user 
+                      LEFT JOIN login login ON login.id = user.id
+                      LEFT JOIN retailer ret ON user.retailer_id = ret.id
+                      WHERE user.email = ? AND user.active = 1 FOR UPDATE`;
+
+      const [rows] = await connection.execute<RowDataPacket[]>(query, [email]);
 
       if (rows.length > 0) {
-        logInfo.info('usuario encontrado con email: ' + email);
+        logInfo.info('User found: ' + email);
         return rows[0];
       }
-      logInfo.info('usuario no encontrado con email: ' + email);
+      logInfo.info('User not found: ' + email);
       return null;
     } catch (error) {
       logError.error('Error getAuthInfoByEmail: user_email :' + email + ' Error: ' + error);
@@ -260,19 +255,6 @@ class DatabaseAuth {
     }
   }
 
-  async checkUser2FABlocked(conn: PoolConnection, userId: string): Promise<void> {
-    const sql = 'SELECT twofa_lock_until FROM login WHERE id = ? FOR UPDATE';
-    const [rows] = await conn.execute<RowDataPacket[]>(sql, [userId]);
-    if (rows.length === 0) {
-      throw new CustomError('User not found', 404);
-    }
-
-    const lockUntil = rows[0].twofa_lock_until as Date | string | null;
-    if (lockUntil && new Date(lockUntil) > new Date()) {
-      throw new CustomError('2FA blocked. Try again later.', 429);
-    }
-  }
-
   async checkCode2FA(connection: PoolConnection, userId: string, codeHash: Buffer): Promise<boolean> {
     try {
       const sql = ` UPDATE login
@@ -382,17 +364,6 @@ class DatabaseAuth {
                           FROM login WHERE id = ?`;
     const [rows] = await conn.execute<NextWinRow[]>(query, [windowMin, windowMin, userId]);
     return { nextCount: rows[0].next_count, nextFirst: rows[0].next_first };
-  }
-
-  async getUserFAInfo(connection: PoolConnection, userId: string): Promise<RowDataPacket> {
-    const query: string = `SELECT twofa_send_lock_until, twofa_send_count, twofa_send_first_at, last_twofa_send_at
-                            FROM login
-                            WHERE id = ? FOR UPDATE`;
-    const [rows] = await connection.execute<RowDataPacket[]>(query, [userId]);
-    if (!rows.length) {
-      throw new CustomError('User not found', 404);
-    }
-    return rows[0];
   }
 
   async blockCodeSends(
