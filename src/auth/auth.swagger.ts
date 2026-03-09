@@ -51,7 +51,6 @@ export const authPaths = {
       tags: ['Auth'],
       summary: 'Post for user log in',
       security: [{ bearerAuth: [] }],
-
       responses: {
         200: {
           description: 'Successfull',

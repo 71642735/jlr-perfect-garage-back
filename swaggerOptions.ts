@@ -1,9 +1,10 @@
+import { backofficeComponents, backofficePaths } from '@/backoffice/backoffice.swagger.js';
 import { authPaths, authComponents } from './src/auth/auth.swagger.js';
 
 export const swaggerDocument = {
   openapi: '3.0.0',
   info: {
-    title: 'DEFENDER TROPHY API',
+    title: 'PERFECT GARAGE API',
     version: '1.0.0',
     description: 'API for Defender Trophy Application',
   },
@@ -13,7 +14,8 @@ export const swaggerDocument = {
     },
   ],
   paths: {
-    ...authPaths,  
+    ...authPaths,
+    ...backofficePaths,
   },
   components: {
     securitySchemes: {
@@ -24,6 +26,7 @@ export const swaggerDocument = {
       },
     },
     ...authComponents,
+    ...backofficeComponents,
     Error413Response: {
       type: 'object',
       properties: {

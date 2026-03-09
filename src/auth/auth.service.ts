@@ -168,12 +168,12 @@ export const checkCodeService = async (
   user: IUser,
   code: string
 ): Promise<{ token: string; refresh_token: string }> => {
-  let conn: PoolConnection | undefined;
+  let connection: PoolConnection | undefined;
   let committed = false;
 
   try {
-    conn = await pool.getConnection();
-    await conn.beginTransaction();
+    connection = await pool.getConnection();
+    await databaseUtils.beginTransaction(connection);
 
     //checkUser2FABlocked;
     const lockUntil = user.twofaLockUntil as Date | string | null;
@@ -182,24 +182,28 @@ export const checkCodeService = async (
     }
 
     const codeHash = hashCode(user.id, code);
-    const codeValid = await databaseAuth.checkCode2FA(conn, user.id, codeHash);
+    const codeValid = await databaseAuth.checkCode2FA(connection, user.id, codeHash);
 
     if (codeValid) {
-      await databaseAuth.reset2FA(conn, user.id);
+      await databaseAuth.reset2FA(connection, user.id);
       const token = await createLoginToken(user, '5m', process.env.JWT_PWD!);
       const refresh_token = await createLoginToken(user, '15m', process.env.REFRESH_JWT_PWD!);
-      await conn.commit();
+      await databaseUtils.commit(connection);
       committed = true;
       return { token, refresh_token };
     }
 
-    const { nextCount, nextFirst } = await databaseAuth.calculateNext2faFailWindowTyped(conn, user.id, WINDOW_MIN);
+    const { nextCount, nextFirst } = await databaseAuth.calculateNext2faFailWindowTyped(
+      connection,
+      user.id,
+      WINDOW_MIN
+    );
 
     const willBlock = nextCount >= USER_MAX_FAILS;
 
-    await databaseAuth.updateAndBlockUser(conn, user.id, nextCount, nextFirst, USER_MAX_FAILS, LOCK_MIN);
+    await databaseAuth.updateAndBlockUser(connection, user.id, nextCount, nextFirst, USER_MAX_FAILS, LOCK_MIN);
 
-    await conn.commit();
+    await databaseUtils.commit(connection);
     committed = true;
 
     if (willBlock) {
@@ -208,13 +212,13 @@ export const checkCodeService = async (
       throw new CustomError('Invalid 2FA code.', 400);
     }
   } catch (err) {
-    if (conn && !committed) {
-      await conn.rollback();
+    if (connection && !committed) {
+      await connection.rollback();
     }
     throw err;
   } finally {
-    if (conn) {
-      conn.release();
+    if (connection) {
+      connection.release();
     }
   }
 };
@@ -224,9 +228,9 @@ export const resendCodeService = async (user: IUser): Promise<{ token: string }>
 
   try {
     connection = await pool.getConnection();
-    await connection.beginTransaction();
+    await databaseUtils.beginTransaction(connection);
     const token = await twoFAProcess(connection, user);
-    await connection.commit();
+    await databaseUtils.commit(connection);
     return { token };
   } catch (error) {
     logError.error('Error in resendCodeService for userID: ' + user.id + error);
