@@ -256,15 +256,14 @@ class DatabaseAuth {
   }
 
   async checkCode2FA(connection: PoolConnection, userId: string, codeHash: Buffer): Promise<boolean> {
-    try {
-      const sql = ` UPDATE login
+    const sql = ` UPDATE login
                     SET twofa_used_at = NOW()
                     WHERE id = ?
                       AND twofa_used_at IS NULL
                       AND twofa_expires_at > NOW()
                       AND twofa_code_hash = ?
                     LIMIT 1 `;
-
+    try {
       const [res] = await connection.execute<ResultSetHeader>(sql, [userId, codeHash]);
       return res.affectedRows === 1;
     } catch (err) {
@@ -287,8 +286,7 @@ class DatabaseAuth {
   }
 
   async calculateNext2faFailWindow(connection: Pool, userId: string): Promise<RowDataPacket[]> {
-    try {
-      const query: string = `SELECT
+    const query: string = `SELECT
                               CASE
                                 WHEN twofa_first_fail_at IS NULL
                                   OR twofa_first_fail_at < NOW() - INTERVAL ? MINUTE
@@ -302,6 +300,7 @@ class DatabaseAuth {
                                 ELSE twofa_first_fail_at
                               END AS next_first
                             FROM login WHERE id = ?`;
+    try {
       const [rows] = await connection.execute<RowDataPacket[]>(query, [
         parseInt(process.env.WINDOW_MIN ?? '10'),
         parseInt(process.env.WINDOW_MIN ?? '10'),
@@ -331,16 +330,21 @@ class DatabaseAuth {
          twofa_expires_at =
            CASE WHEN ? >= ? THEN NOW() ELSE twofa_expires_at END
      WHERE id = ?`;
-    await conn.execute(query, [
-      nextCount,
-      nextFirst,
-      nextCount,
-      userMaxFails,
-      lockMin,
-      nextCount,
-      userMaxFails,
-      userId,
-    ]);
+    try {
+      await conn.execute(query, [
+        nextCount,
+        nextFirst,
+        nextCount,
+        userMaxFails,
+        lockMin,
+        nextCount,
+        userMaxFails,
+        userId,
+      ]);
+    } catch (error) {
+      logError.error('Error updateAndBlockUser: user_id :' + userId + ' Error: ' + error);
+      throw error;
+    }
   }
 
   async calculateNext2faFailWindowTyped(
@@ -362,8 +366,13 @@ class DatabaseAuth {
                               ELSE twofa_first_fail_at
                             END AS next_first
                           FROM login WHERE id = ?`;
-    const [rows] = await conn.execute<NextWinRow[]>(query, [windowMin, windowMin, userId]);
-    return { nextCount: rows[0].next_count, nextFirst: rows[0].next_first };
+    try {
+      const [rows] = await conn.execute<NextWinRow[]>(query, [windowMin, windowMin, userId]);
+      return { nextCount: rows[0].next_count, nextFirst: rows[0].next_first };
+    } catch (error) {
+      logError.error('Error calculateNext2faFailWindowTyped: user_id :' + userId + ' Error: ' + error);
+      throw error;
+    }
   }
 
   async blockCodeSends(
@@ -378,8 +387,13 @@ class DatabaseAuth {
                                 twofa_send_first_at = ?,
                                 twofa_send_lock_until = NOW() + INTERVAL ? MINUTE
                           WHERE id = ?`;
-    await connection.execute(query, [nextCount, nextFirst, sendLockMin, userId]);
-    return;
+    try {
+      await connection.execute(query, [nextCount, nextFirst, sendLockMin, userId]);
+      return;
+    } catch (error) {
+      logError.error('Error blockCodeSends: user_id :' + userId + ' Error: ' + error);
+      throw error;
+    }
   }
   async updateCountCodeSends(connection: PoolConnection, userId: string): Promise<void> {
     const query: string = `UPDATE login
@@ -399,12 +413,18 @@ class DatabaseAuth {
                                   END,
                                 last_twofa_send_at = NOW()
                           WHERE id = ?`;
-    await connection.execute(query, [userId]);
+    try {
+      await connection.execute(query, [userId]);
+    } catch (error) {
+      logError.error('Error updateCountCodeSends: user_id :' + userId + ' Error: ' + error);
+      throw error;
+    }
   }
 
   async reset2FAAll(conn: PoolConnection, userId: string): Promise<void> {
-    await conn.execute(
-      `UPDATE login
+    try {
+      await conn.execute(
+        `UPDATE login
       SET twofa_fail_count = 0,
           twofa_first_fail_at = NULL,
           twofa_lock_until = NULL,
@@ -415,8 +435,12 @@ class DatabaseAuth {
           twofa_send_lock_until = NULL,
           last_twofa_send_at = NULL
       WHERE id = ?`,
-      [userId]
-    );
+        [userId]
+      );
+    } catch (error) {
+      logError.error('Error reset2FAAll: user_id :' + userId + ' Error: ' + error);
+      throw error;
+    }
   }
 }
 export default DatabaseAuth;

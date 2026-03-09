@@ -156,6 +156,10 @@ const performFACodeSends = async (connection: PoolConnection, user: IUser): Prom
 
     await databaseAuth.updateCountCodeSends(connection, user.id);
   } catch (error) {
+    logError.error('performFACodeSends failed', {
+      userId: user.id,
+      error,
+    });
     throw error;
   }
 };
@@ -222,6 +226,7 @@ export const resendCodeService = async (user: IUser): Promise<{ token: string }>
     connection = await pool.getConnection();
     await connection.beginTransaction();
     const token = await twoFAProcess(connection, user);
+    await connection.commit();
     return { token };
   } catch (error) {
     logError.error('Error in resendCodeService for userID: ' + user.id + error);

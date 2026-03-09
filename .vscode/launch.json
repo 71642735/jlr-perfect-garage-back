@@ -4,13 +4,13 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug App (tsx)",
-      "runtimeExecutable": "node",
+      "name": "Debug App (tsx watch)",
+      "runtimeExecutable": "npx",
       "runtimeArgs": [
-        "--import",
-        "tsx"
+        "tsx",
+        "watch",
+        "${workspaceFolder}/app.ts"
       ],
-      "program": "${workspaceFolder}/app.ts",
       "skipFiles": [
         "<node_internals>/**"
       ],
