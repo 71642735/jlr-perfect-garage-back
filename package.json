@@ -9,7 +9,7 @@
     "dev": "npm run lint && tsx watch .\\app.ts",
     "watch": "tsc --watch",
     "start": "node .\\dist\\app.js",
-    "test:detect": "jest --runInBand --detectOpenHandles",
+    "test": "jest --runInBand --forceExit",
     "prepare": "husky"
   },
   "keywords": [],

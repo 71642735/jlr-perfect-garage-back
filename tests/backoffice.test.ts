@@ -28,11 +28,15 @@ jest.mock('passport', () => ({
   __esModule: true,
   default: {
     initialize: () => (_req: any, _res: any, next: any) => next(),
-    authenticate: () => (req: any, _res: any, next: any) => {
+    authenticate: () => (req: any, res: any, next: any) => {
       const testUserId = req.headers['x-test-user-id'] as string | undefined;
 
+      if (!testUserId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
       req.user = {
-        id: testUserId ?? '11111',
+        id: testUserId,
       };
 
       next();
@@ -94,11 +98,14 @@ describe('Backoffice endpoints', () => {
         },
       });
     });
+    it('should return 401 when user is not authenticated', async () => {
+      const res = await request(app).get('/api/v1/backoffice/user');
+      expect(res.status).toBe(401);
+    });
   });
 
-  /*
   describe('PATCH /api/v1/backoffice/user', () => {
-    it('should return 200 and updated user info when lang is valid', async () => {
+    /*  it('should return 200 and updated user info when lang is valid', async () => {
       mockUpdateUserPreferredLanguage.mockResolvedValue(undefined);
       mockGetUserInfo.mockResolvedValue({
         user_code: '11111',
@@ -117,25 +124,24 @@ describe('Backoffice endpoints', () => {
         .send({ lang: 'es' });
 
       expect(res.status).toBe(200);
+    });*/
+
+    it('should return 422 when lang is missing', async () => {
+      const res = await request(app).patch('/api/v1/backoffice/user').set('x-test-user-id', '11111').send({});
+      expect(res.status).toBe(422);
+    });
+    it('should return 401 when user is not authenticated', async () => {
+      const res = await request(app).patch('/api/v1/backoffice/user').send({});
+      expect(res.status).toBe(401);
     });
 
-    it('should return 400 when lang is missing', async () => {
-      const res = await request(app)
-        .patch('/api/v1/backoffice/user')
-        .set('x-test-user-id', '11111')
-        .send({});
-
-      expect(res.status).toBe(400);
-    });
-
-    it('should return 400 when lang is invalid type', async () => {
+    it('should return 422 when lang is invalid type', async () => {
       const res = await request(app)
         .patch('/api/v1/backoffice/user')
         .set('x-test-user-id', '11111')
         .send({ lang: 123 });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422);
     });
   });
-  */
 });
