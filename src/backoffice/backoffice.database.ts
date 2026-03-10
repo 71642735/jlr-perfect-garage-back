@@ -8,7 +8,7 @@ dotenv.config();
 class DatabaseBackoffice {
   async updateUserPreferredLanguage(connection: Pool, userId: string, lang: string): Promise<void> {
     try {
-      const query = 'UPDATE user SET preferred_language = ? WHERE id = ?';
+      const query = 'UPDATE users SET preferred_language = ? WHERE user_code = ?';
 
       const [result] = await connection.execute<ResultSetHeader>(query, [lang, userId]);
       if (result.affectedRows > 0) {
@@ -30,7 +30,7 @@ class DatabaseBackoffice {
                     FROM login login 
                     LEFT JOIN users users ON login.id = users.user_code 
                     LEFT JOIN retailers ret ON ret.retailer_id = users.retailer_id 
-                    WHERE id = ? and users.active = 1 and ret.active = 1`;
+                    WHERE id = ? and users.active = 1 and ret.active = 1 and deleted IS NULL`;
 
     try {
       const [rows] = await connection.execute<RowDataPacket[]>(sqlQuery, [id]);
