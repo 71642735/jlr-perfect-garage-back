@@ -24,5 +24,24 @@ class DatabaseBackoffice {
       throw error;
     }
   }
+
+  async getUserInfo(connection: PoolConnection, id: string): Promise<RowDataPacket | null> {
+    let sqlQuery = `SELECT user_code, login.email, users.first_name, users.last_name, users.preferred_language , users.retailer_id, ret.name as retailer_name, ret.area_code as retailer_area_code  
+                    FROM login login 
+                    LEFT JOIN users users ON login.id = users.user_code 
+                    LEFT JOIN retailers ret ON ret.retailer_id = users.retailer_id 
+                    WHERE id = '111111' and users.active = 1 and ret.active = 1`;
+
+    try {
+      const [rows] = await connection.execute<RowDataPacket[]>(sqlQuery, id);
+      if (rows.length === 0) {
+        return null;
+      }
+      return rows[0];
+    } catch (error) {
+      logError.error(`Error getUserInfo for id: ${id}`);
+      throw error;
+    }
+  }
 }
 export default DatabaseBackoffice;

@@ -2,10 +2,17 @@ import { IUser } from '@/auth/interfaces/auth.iuser';
 import { handleError } from '@/utils/utils.error';
 import { logError } from '@/utils/utils.logger';
 import { Request, Response } from 'express';
-import { patchUserService } from './backoffice.service';
+import { getUserData, patchUserService } from './backoffice.service';
 
 export const getInfoUserController = async (req: Request, res: Response): Promise<Response> => {
   const user = req.user as IUser;
+
+  const response = await getUserData(user);
+
+  if (!response) {
+    return res.status(204).send();
+  }
+
   return res.status(200).json(user);
 };
 

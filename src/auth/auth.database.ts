@@ -55,13 +55,13 @@ class DatabaseAuth {
 
   async getAuthInfoById(connection: PoolConnection | Pool, id: string): Promise<RowDataPacket | null> {
     try {
-      const query: string = `SELECT user.id, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
+      const query: string = `SELECT user.user_code, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
                         user.preferred_language, login.twofa_send_lock_until, login.twofa_send_count, login.twofa_send_first_at,
                         login.last_twofa_send_at, login.twofa_lock_until
-                      FROM user user 
-                      LEFT JOIN login login ON login.id = user.id
-                      LEFT JOIN retailer ret ON user.retailer_id = ret.id
-                      WHERE user.id = ? AND user.active = 1 FOR UPDATE`;
+                      FROM users user 
+                      LEFT JOIN login login ON login.id = user.user_code
+                      LEFT JOIN retailers ret ON user.retailer_id = ret.retailer_id
+                      WHERE user.user_code = ? AND user.active = 1 FOR UPDATE`;
       const [rows] = await connection.execute<RowDataPacket[]>(query, [id]);
 
       if (rows.length > 0) {
@@ -76,12 +76,12 @@ class DatabaseAuth {
 
   async getAuthInfoByEmail(connection: PoolConnection, email: string): Promise<RowDataPacket | null> {
     try {
-      const query: string = `SELECT user.id, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
+      const query: string = `SELECT user.user_code, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
                         user.preferred_language, login.twofa_send_lock_until, login.twofa_send_count, login.twofa_send_first_at,
                         login.last_twofa_send_at, login.twofa_lock_until
-                      FROM user user 
-                      LEFT JOIN login login ON login.id = user.id
-                      LEFT JOIN retailer ret ON user.retailer_id = ret.id
+                      FROM users user 
+                      LEFT JOIN login login ON login.id = user.user_code
+                      LEFT JOIN retailers ret ON user.retailer_id = ret.retailer_id
                       WHERE user.email = ? AND user.active = 1 FOR UPDATE`;
 
       const [rows] = await connection.execute<RowDataPacket[]>(query, [email]);
