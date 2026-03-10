@@ -72,7 +72,7 @@ describe('Backoffice endpoints', () => {
       expect(res.status).toBe(204);
     });
 
-    it.only('should return 200 and user info when request is valid and has clients from different users of same retailer', async () => {
+    it('should return 200 and user info when request is valid and has clients from different users of same retailer', async () => {
       mockGetUserInfo.mockResolvedValue({
         user_code: '11111',
         email: 'juan@test.com',
