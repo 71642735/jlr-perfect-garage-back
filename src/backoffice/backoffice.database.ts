@@ -43,5 +43,38 @@ class DatabaseBackoffice {
       throw error;
     }
   }
+
+  async getRetailerClientsByUserCode(connection: PoolConnection, userCode: string): Promise<RowDataPacket[] | null> {
+    let sqlQuery = `SELECT
+                      client.client_id, client.name as client_name, client.surname as client_lastname, client.email as client_email,
+                      client.created as client_created,
+                      #client.phone as client_phone,
+                      ref.referee_id, ref.firstname as referee_name, ref.lastname as referee_last_name, ref.email as referee_email,
+                      ref.phone as referee_phone, ref.created as referee_created, purchase.voucher_id as voucher_number
+                    FROM users user
+                    JOIN clients client ON client.user_id = user.user_id AND client.deleted IS NULL
+                    LEFT JOIN referees ref ON ref.client_id = client.client_id AND ref.deleted IS NULL
+                    LEFT JOIN purchases purchase ON purchase.referee_id = ref.referee_id AND purchase.deleted IS NULL
+                    WHERE user.retailer_id = (
+                                                SELECT retailer_id
+                                                FROM users
+                                                WHERE user_code = ?
+                                                  AND deleted IS NULL 
+                                                LIMIT 1
+                                              )
+                      AND user.deleted IS NULL
+                    ORDER BY client.created;`;
+
+    try {
+      const [rows] = await connection.execute<RowDataPacket[]>(sqlQuery, [userCode]);
+      if (rows.length === 0) {
+        return null;
+      }
+      return rows;
+    } catch (error) {
+      logError.error(`Error getRetailerClientsByUserCode for usercode: ${userCode} error: ` + error);
+      throw error;
+    }
+  }
 }
 export default DatabaseBackoffice;

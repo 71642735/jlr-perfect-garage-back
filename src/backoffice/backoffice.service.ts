@@ -28,7 +28,9 @@ export const getUserData = async (user: IUser): Promise<UserInfoResponse | null>
     if (dbUserData == null) {
       return null;
     }
-    const userInfo = mapUserInfoResponse(dbUserData);
+    const dbClients = await databaseBackoffice.getRetailerClientsByUserCode(connection, dbUserData.user_code);
+
+    const userInfo = mapUserInfoResponse(dbUserData, dbClients);
     await databaseUtils.commit(connection);
     return userInfo;
   } catch (error) {
