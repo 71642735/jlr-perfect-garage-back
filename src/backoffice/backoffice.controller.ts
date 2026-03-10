@@ -13,7 +13,7 @@ export const getInfoUserController = async (req: Request, res: Response): Promis
     return res.status(204).send();
   }
 
-  return res.status(200).json(user);
+  return res.status(200).json(response);
 };
 
 export const patchUserController = async (req: Request, res: Response): Promise<Response> => {

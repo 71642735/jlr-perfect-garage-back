@@ -1,5 +1,5 @@
-import { backofficeComponents, backofficePaths } from '@/backoffice/backoffice.swagger.js';
-import { authPaths, authComponents } from './src/auth/auth.swagger.js';
+import { backofficeComponents, backofficePaths } from '@/backoffice/backoffice.swagger';
+import { authPaths, authComponents } from './src/auth/auth.swagger';
 
 export const swaggerDocument = {
   openapi: '3.0.0',

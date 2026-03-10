@@ -10,8 +10,8 @@ export function mapUserInfoResponse(user: RowDataPacket): UserInfoResponse {
     preferred_language: user.preferred_language,
     retailer: {
       id: user.retailer_id,
-      name: user.name,
-      area_code: user.area_code,
+      name: user.retailer_name,
+      area_code: user.retailer_area_code,
     },
   };
 
