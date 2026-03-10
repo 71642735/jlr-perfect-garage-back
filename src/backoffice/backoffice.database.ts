@@ -1,6 +1,5 @@
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { logInfo, logError } from '@/utils/utils.logger';
-import { CustomError } from '@/utils/utils.custom.error';
 import dotenv from 'dotenv';
 
 dotenv.config();
