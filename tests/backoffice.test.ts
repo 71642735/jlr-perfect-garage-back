@@ -70,9 +70,7 @@ describe('Backoffice endpoints', () => {
   describe('GET /api/v1/backoffice/user', () => {
     it('should return 204 when user does not exist', async () => {
       mockGetUserInfo.mockResolvedValue(null);
-
       const res = await request(app).get('/api/v1/backoffice/user').set('x-test-user-id', '2222');
-
       expect(res.status).toBe(204);
     });
 
@@ -164,9 +162,23 @@ describe('Backoffice endpoints', () => {
       });
     });
 
+    it('should return 204 when the user not exist', async () => {
+      mockGetUserInfo.mockResolvedValue(null);
+
+      const res = await request(app).get('/api/v1/backoffice/user').set('x-test-user-id', '11111');
+
+      expect(res.status).toBe(204);
+    });
+
     it('should return 401 when user is not authenticated', async () => {
       const res = await request(app).get('/api/v1/backoffice/user');
       expect(res.status).toBe(401);
+    });
+
+    it('should return 500 when getUserInfo fails ', async () => {
+      mockGetUserInfo.mockRejectedValue(new Error('DB error'));
+      const res = await request(app).get('/api/v1/backoffice/user').set('x-test-user-id', '11111');
+      expect(res.status).toBe(500);
     });
   });
 
@@ -208,6 +220,16 @@ describe('Backoffice endpoints', () => {
         .send({ lang: 123 });
       expect(res.status).toBe(422);
     });
+    it('should return 500 when updating user lang fails', async () => {
+      mockUpdateUserPreferredLanguage.mockRejectedValue(new Error('DB error'));
+
+      const res = await request(app)
+        .patch('/api/v1/backoffice/user')
+        .set('x-test-user-id', '11111')
+        .send({ lang: 'es' });
+
+      expect(res.status).toBe(500);
+    });
   });
 
   describe('POST /api/v1/backoffice/client', () => {
@@ -248,6 +270,19 @@ describe('Backoffice endpoints', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('should return 500 when creating client fails', async () => {
+      mockCreateClient.mockRejectedValue(new Error('DB error'));
+
+      const res = await request(app).post('/api/v1/backoffice/client').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(500);
+    });
   });
   describe('PUT /api/v1/backoffice/client/:clientId', () => {
     it('should return 200 when client is updated', async () => {
@@ -280,6 +315,19 @@ describe('Backoffice endpoints', () => {
       });
 
       expect(res.status).toBe(401);
+    });
+
+    it('should return 500 when update client fails', async () => {
+      mockUpdateClient.mockRejectedValue(new Error('DB error'));
+
+      const res = await request(app).put('/api/v1/backoffice/client/1').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(500);
     });
   });
 });

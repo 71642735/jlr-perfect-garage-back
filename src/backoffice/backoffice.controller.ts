@@ -8,13 +8,19 @@ import { IClient } from './interfaces/backoffice.IUserInfoResponse';
 export const getInfoUserController = async (req: Request, res: Response): Promise<Response> => {
   const user = req.user as IUser;
 
-  const response = await getUserData(user);
+  try {
+    const response = await getUserData(user);
 
-  if (!response) {
-    return res.status(204).send();
+    if (!response) {
+      return res.status(204).send();
+    }
+
+    return res.status(200).json(response);
+  } catch (error) {
+    const msg = 'Error in getInfoUserController ' + error;
+    logError.error(msg);
+    return handleError(error, res, msg);
   }
-
-  return res.status(200).json(response);
 };
 
 export const patchUserController = async (req: Request, res: Response): Promise<Response> => {
