@@ -4,6 +4,8 @@ import request from 'supertest';
 const mockGetUserInfo = jest.fn();
 const mockUpdateUserPreferredLanguage = jest.fn();
 const mockGetClientsInfo = jest.fn();
+const mockCreateClient = jest.fn();
+const mockUpdateClient = jest.fn();
 
 // Mock del pool y de la conexión para que no se abra MySQL real
 const mockConnection = {
@@ -53,6 +55,8 @@ jest.mock('@/backoffice/backoffice.database', () => ({
     getUserInfo: mockGetUserInfo,
     updateUserPreferredLanguage: mockUpdateUserPreferredLanguage,
     getRetailerClientsByUserCode: mockGetClientsInfo,
+    createClient: mockCreateClient,
+    updateClient: mockUpdateClient,
   })),
 }));
 
@@ -87,15 +91,15 @@ describe('Backoffice endpoints', () => {
       mockGetClientsInfo.mockResolvedValue([
         {
           client_id: 1,
-          client_name: 'Carlos',
-          client_lastname: 'Lopez',
+          client_first_name: 'Carlos',
+          client_last_name: 'Lopez',
           client_email: 'carlos@test.com',
-          //  client_phone: '600000001',
+          client_phone: '600000001',
           client_created: new Date('2024-01-01'),
 
           referee_id: 10,
-          referee_name: 'Pedro',
-          referee_lastname: 'Martinez',
+          referee_first_name: 'Pedro',
+          referee_last_name: 'Martinez',
           referee_email: 'pedro@test.com',
           referee_phone: '600000010',
           referee_created: new Date('2024-02-01'),
@@ -103,10 +107,10 @@ describe('Backoffice endpoints', () => {
         },
         {
           client_id: 2,
-          client_name: 'Maria',
-          client_lastname: 'Garcia',
+          client_first_name: 'Maria',
+          client_last_name: 'Garcia',
           client_email: 'maria@test.com',
-          //client_phone: '600000002',
+          client_phone: '600000002',
           client_created: new Date('2024-03-01'),
           referee_id: null,
         },
@@ -119,7 +123,7 @@ describe('Backoffice endpoints', () => {
       expect(res.body).toEqual({
         id: '11111',
         email: 'juan@test.com',
-        name: 'Juan',
+        first_name: 'Juan',
         last_name: 'Gutierrez',
         preferred_language: 'es',
         retailer: {
@@ -130,15 +134,15 @@ describe('Backoffice endpoints', () => {
         clients: [
           {
             id: 1,
-            name: 'Carlos',
+            first_name: 'Carlos',
             last_name: 'Lopez',
             email: 'carlos@test.com',
-            //  phone: '600000001',
+            phone: '600000001',
             created: new Date('2024-01-01').toISOString(),
             referees: [
               {
                 id: 10,
-                name: 'Pedro',
+                first_name: 'Pedro',
                 last_name: 'Martinez',
                 email: 'pedro@test.com',
                 phone: '600000010',
@@ -149,10 +153,10 @@ describe('Backoffice endpoints', () => {
           },
           {
             id: 2,
-            name: 'Maria',
+            first_name: 'Maria',
             last_name: 'Garcia',
             email: 'maria@test.com',
-            //phone: '600000002',
+            phone: '600000002',
             created: new Date('2024-03-01').toISOString(),
             referees: [],
           },
@@ -167,7 +171,7 @@ describe('Backoffice endpoints', () => {
   });
 
   describe('PATCH /api/v1/backoffice/user', () => {
-    it('should return 200 and updated user info when lang is valid', async () => {
+    it('should return 201 and updated user info when lang is valid', async () => {
       mockUpdateUserPreferredLanguage.mockResolvedValue(undefined);
       mockGetUserInfo.mockResolvedValue({
         user_code: '11111',
@@ -185,7 +189,7 @@ describe('Backoffice endpoints', () => {
         .set('x-test-user-id', '11111')
         .send({ lang: 'es' });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
     });
 
     it('should return 422 when lang is missing', async () => {
@@ -203,6 +207,79 @@ describe('Backoffice endpoints', () => {
         .set('x-test-user-id', '11111')
         .send({ lang: 123 });
       expect(res.status).toBe(422);
+    });
+  });
+
+  describe('POST /api/v1/backoffice/client', () => {
+    it('should return 201 and create client when request is valid', async () => {
+      mockCreateClient.mockResolvedValue({
+        client_id: 1,
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      const res = await request(app).post('/api/v1/backoffice/client').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should return 422 when body is invalid', async () => {
+      const res = await request(app).post('/api/v1/backoffice/client').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+      });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('should return 401 when user is not authenticated', async () => {
+      const res = await request(app).post('/api/v1/backoffice/client').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(401);
+    });
+  });
+  describe('PUT /api/v1/backoffice/client/:clientId', () => {
+    it('should return 200 when client is updated', async () => {
+      mockUpdateClient.mockResolvedValue(undefined);
+
+      const res = await request(app).put('/api/v1/backoffice/client/1').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(201);
+    });
+
+    it('should return 422 when body is invalid', async () => {
+      const res = await request(app).put('/api/v1/backoffice/client/1').set('x-test-user-id', '11111').send({
+        first_name: 'Carlos',
+      });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('should return 401 when user is not authenticated', async () => {
+      const res = await request(app).put('/api/v1/backoffice/client/1').send({
+        first_name: 'Carlos',
+        last_name: 'Lopez',
+        email: 'carlos@test.com',
+        phone: '600000001',
+      });
+
+      expect(res.status).toBe(401);
     });
   });
 });

@@ -1,6 +1,7 @@
 import { Pool, PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { logInfo, logError } from '@/utils/utils.logger';
 import dotenv from 'dotenv';
+import { IClient } from './interfaces/backoffice.IUserInfoResponse';
 
 dotenv.config();
 
@@ -45,9 +46,9 @@ class DatabaseBackoffice {
 
   async getRetailerClientsByUserCode(connection: PoolConnection, userCode: string): Promise<RowDataPacket[] | null> {
     let sqlQuery = `SELECT
-                      client.client_id, client.name as client_name, client.surname as client_lastname, client.email as client_email,
+                      client.client_id, client.first_name as client_first_name, client.last_name as client_last_name, client.email as client_email,
                       client.created as client_created,
-                      #client.phone as client_phone,
+                      client.phone as client_phone,
                       ref.referee_id, ref.firstname as referee_name, ref.lastname as referee_last_name, ref.email as referee_email,
                       ref.phone as referee_phone, ref.created as referee_created, purchase.voucher_id as voucher_number
                     FROM users user
@@ -72,6 +73,48 @@ class DatabaseBackoffice {
       return rows;
     } catch (error) {
       logError.error(`Error getRetailerClientsByUserCode for usercode: ${userCode} error: ` + error);
+      throw error;
+    }
+  }
+
+  async createClient(connection: Pool, internalUserId: number, client: IClient): Promise<void> {
+    try {
+      const query = `INSERT INTO clients (user_id, first_name, last_name, email, phone)
+                      VALUES (?, ?, ?, ?, ?)`;
+
+      const [result] = await connection.execute<ResultSetHeader>(query, [
+        internalUserId,
+        client.first_name,
+        client.last_name,
+        client.email,
+        client.phone,
+      ]);
+
+      logInfo.info(`Client created ${result.insertId} by userId ${internalUserId}`);
+    } catch (error) {
+      logError.error('Unexpected error updating language for userId :' + internalUserId + 'Error: ' + error);
+      throw error;
+    }
+  }
+
+  async updateClient(connection: Pool, internalUserId: number, clientId: number, client: IClient): Promise<void> {
+    try {
+      const query = `UPDATE clients
+                      SET first_name = ?, last_name = ?, email = ?, phone = ?
+                      WHERE client_id = ? AND user_id = ?`;
+
+      await connection.execute<ResultSetHeader>(query, [
+        client.first_name,
+        client.last_name,
+        client.email,
+        client.phone,
+        clientId,
+        internalUserId,
+      ]);
+
+      logInfo.info(`Client updated ${clientId} by userId ${internalUserId}`);
+    } catch (error) {
+      logError.error('Unexpected error updating client ' + clientId + ' Error: ' + error);
       throw error;
     }
   }

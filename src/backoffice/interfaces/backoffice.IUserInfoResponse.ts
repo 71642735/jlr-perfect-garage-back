@@ -1,6 +1,6 @@
 export interface UserInfoResponse {
   id: string;
-  name: string;
+  first_name: string;
   last_name: string;
   email: string;
   preferred_language: string;
@@ -11,14 +11,14 @@ export interface UserInfoResponse {
   };
   clients?: {
     id: number;
-    name: string;
+    first_name: string;
     last_name: string;
     email: string;
     phone: string;
     created: Date;
     referees: {
       id: number;
-      name: string;
+      first_name: string;
       last_name: string;
       email: string;
       phone: string;
@@ -26,4 +26,12 @@ export interface UserInfoResponse {
       voucher_number: string;
     }[];
   }[];
+}
+
+export interface IClient {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
 }

@@ -5,7 +5,7 @@ export function mapUserInfoResponse(user: RowDataPacket, clients: RowDataPacket[
   const response: UserInfoResponse = {
     id: user.user_code,
     email: user.email,
-    name: user.first_name,
+    first_name: user.first_name,
     last_name: user.last_name,
     preferred_language: user.preferred_language,
     retailer: {
@@ -28,8 +28,9 @@ export function mapUserInfoResponse(user: RowDataPacket, clients: RowDataPacket[
       if (!client) {
         client = {
           id: row.client_id,
-          name: row.client_name,
-          last_name: row.client_lastname,
+          first_name: row.client_first_name,
+          last_name: row.client_last_name,
+          phone: row.client_phone,
           email: row.client_email,
           created: row.client_created,
           referees: [],
@@ -48,8 +49,8 @@ export function mapUserInfoResponse(user: RowDataPacket, clients: RowDataPacket[
       if (!referee) {
         referee = {
           id: row.referee_id,
-          name: row.referee_name,
-          last_name: row.referee_lastname,
+          first_name: row.referee_first_name,
+          last_name: row.referee_last_name,
           email: row.referee_email,
           phone: row.referee_phone,
           created: row.referee_created,

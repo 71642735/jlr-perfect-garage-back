@@ -61,9 +61,89 @@ export const backofficePaths = {
       },
     },
   },
+  '/api/v1/backoffice/client': {
+    post: {
+      tags: ['Backoffice'],
+      security: [{ bearerAuth: [] }],
+      summary: 'Create client',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ClientRequest',
+            },
+          },
+        },
+      },
+      responses: {
+        201: { description: 'Client created' },
+      },
+      ...getResponses([401, 422, 500]),
+    },
+  },
+  '/api/v1/backoffice/client/{clientId}': {
+    put: {
+      tags: ['Backoffice'],
+      security: [{ bearerAuth: [] }],
+      summary: 'Update client',
+      parameters: [
+        {
+          in: 'path',
+          name: 'clientId',
+          required: true,
+          schema: {
+            type: 'integer',
+            example: 1,
+          },
+        },
+      ],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ClientRequest',
+            },
+          },
+        },
+      },
+      responses: {
+        201: {
+          description: 'Client updated',
+        },
+        ...getResponses([401, 422, 500]),
+      },
+    },
+  },
 };
+
 export const backofficeComponents = {
   schemas: {
+    ClientRequest: {
+      type: 'object',
+      required: ['first_name', 'last_name', 'email', 'phone'],
+      properties: {
+        first_name: {
+          type: 'string',
+          example: 'Carlos',
+        },
+        last_name: {
+          type: 'string',
+          example: 'Lopez',
+        },
+        email: {
+          type: 'string',
+          format: 'email',
+          example: 'carlos@test.com',
+        },
+        phone: {
+          type: 'string',
+          example: '600000001',
+        },
+      },
+    },
+
     UserInfoResponse: {
       type: 'object',
       properties: {
@@ -71,7 +151,7 @@ export const backofficeComponents = {
           type: 'string',
           example: '11111',
         },
-        name: {
+        first_name: {
           type: 'string',
           example: 'Juan',
         },
@@ -126,7 +206,7 @@ export const backofficeComponents = {
           type: 'number',
           example: 1,
         },
-        name: {
+        first_name: {
           type: 'string',
           example: 'Carlos',
         },
@@ -164,7 +244,7 @@ export const backofficeComponents = {
           type: 'number',
           example: 10,
         },
-        name: {
+        first_name: {
           type: 'string',
           example: 'Pedro',
         },

@@ -4,7 +4,7 @@ import DatabaseBackoffice from './backoffice.database';
 import { IUser } from '@/auth/interfaces/auth.iuser';
 import { Database } from '@/utils/utils.database';
 import { mapUserInfoResponse } from './backoffice..mapper';
-import { UserInfoResponse } from './interfaces/backoffice.IUserInfoResponse';
+import { IClient, UserInfoResponse } from './interfaces/backoffice.IUserInfoResponse';
 
 const databaseBackoffice = new DatabaseBackoffice();
 const databaseUtils = new Database();
@@ -43,5 +43,23 @@ export const getUserData = async (user: IUser): Promise<UserInfoResponse | null>
     if (connection) {
       connection.release();
     }
+  }
+};
+
+export const createClientService = async (user: IUser, client: IClient): Promise<void> => {
+  try {
+    await databaseBackoffice.createClient(pool, user.internalUserId, client);
+  } catch (error) {
+    logError.error(`Error in createClientService for client: ${client} by user ${user.id} Error: ${error}`);
+    throw error;
+  }
+};
+
+export const updateClientService = async (user: IUser, clientId: number, client: IClient): Promise<void> => {
+  try {
+    await databaseBackoffice.updateClient(pool, user.internalUserId, clientId, client);
+  } catch (error) {
+    logError.error(`Error in updateClientService for client ${clientId} by user ${user.id} Error: ${error}`);
+    throw error;
   }
 };

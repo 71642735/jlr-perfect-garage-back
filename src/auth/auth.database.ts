@@ -55,7 +55,7 @@ class DatabaseAuth {
 
   async getAuthInfoById(connection: PoolConnection | Pool, id: string): Promise<RowDataPacket | null> {
     try {
-      const query: string = `SELECT user.user_code, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
+      const query: string = `SELECT user.user_code, user.user_id, user.email, login.password, login.role, login.status, login.failed_login_attempts, ret.area_code,
                         user.preferred_language, login.twofa_send_lock_until, login.twofa_send_count, login.twofa_send_first_at,
                         login.last_twofa_send_at, login.twofa_lock_until
                       FROM users user 

@@ -4,6 +4,7 @@ import { IUser } from './interfaces/auth.iuser';
 export const userAuthMapper = async (data: RowDataPacket): Promise<IUser> => {
   const user: IUser = {
     id: data.user_code,
+    internalUserId: data.user_id,
     role: data.role,
     email: data.email,
     password: data.password,
